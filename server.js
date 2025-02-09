@@ -1,41 +1,34 @@
-//Node js server
-const express = require('express');
-const mongoose = require('mongoose');
-const bodyParser = require('body-parser');
-const cors = require('cors');//To control cors functionality
-const helmet = require('helmet');//Control database information
-//const rateLimit = require('express-rate-limit');//To protect from DDOS attacks
+import express from "express";
+import cors from "cors";
+import "dotenv/config";
+import connectDB from "./config/mongodb.js";
+import connectCloudinary from "./config/cloudinary.js";
+import userRouter from "./routes/userRoute.js";
+import productRouter from "./routes/productRoute.js";
+import cartRouter from './routes/cartRoute.js';
+import orderRouter from "./routes/orderRoutes";
+
+
+
+// APP Config
 const app = express();
-require('dotenv').config();
+const port = process.env.PORT || 4000;
 
-//To limit the niumber of request send to the server
-// const limiter = rateLimit({
-// 	windowMs: 10 * 60 * 1000, // 10 minutes
-// 	limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
-// 	standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
-// 	legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
-// 	// store: ... , // Redis, Memcached, etc. See below.
-// })
-const port = process.env.PORT || 3000;
+connectDB();
+connectCloudinary();
 
-// Middleware
+// Middlewares
+app.use(express.json());
 app.use(cors());
-app.use(helmet());
-// app.use(limiter);
-app.use(bodyParser.json());
 
-//Mongodb Connection Handler
-mongoose.connect(process.env.MONGO_URL, {})
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('Error connecting to MongoDB:', err));
-
-//Define Routes
-app.use('/api/routes', require('./routes/route'));
-app.use('/',(req,res) => {
-  res.send('Welcome to the API!');
+// API Endpoints
+app.use("/api/order",orderRouter)
+app.use("/api/user", userRouter);
+app.use("/api/product", productRouter);
+app.use('/api/cart', cartRouter);
+app.get("/", (req, res) => {
+  res.send("API Working");
 });
 
-//Server start
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+// Server
+app.listen(port, () => console.log("Server started on PORT: " + port));
